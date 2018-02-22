@@ -12,7 +12,7 @@ import mqtt
 #                               F U N C T I O N S
 #------------------------------------------------------------------------------
 def file_zipper(fileName):
-    maxStrSize = 100000
+    maxStrSize = 130000
     filename = fileName.split('/').pop()
     string = open(fileName, 'r').read()
     bigCmpstr =  base64.b64encode(zlib.compress(string,9))
@@ -90,7 +90,7 @@ def checkVGdat(client,deviceId):
             print 'no eBusLog.vgdat in ' + filePath
 
 def vgdatSender(client):
-    filePath = '/home/pi/Data/RawData/'
+    filePath = '/home/pi/Data/Rawdata/'
     #filePath = 'C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\'
     while True:
         time.sleep(300)
@@ -98,12 +98,14 @@ def vgdatSender(client):
         clearedList = [ x for x in fileList if "eBusLog" in x and ".vgdat" in x ]
         if len(clearedList)>0:
             for fileName in clearedList:
-                filename, cmpstrList = file_zipper(fileName)
+                dateStr = fileName[len(fileName)-19:-13]
+                date = '20'+dateStr[-2:]+'-'+dateStr[2:4]+'-'+dateStr[0:2]
+                filename, cmpstrList = file_zipper(filePath+fileName)
                 for index in range(0,len(cmpstrList)):
                     print 'filename:'+filename + ' | index:'+str(index)
-                    mqtt.MQTTpostEvent('rawData.vgdat', {'filename':filename, 'index':str(index), 'content':cmpstrList[index]}, client, 'externalDevice', deviceId)
+                    mqtt.MQTTpostEvent('rawData.vgdat', {'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}, client, 'externalDevice', deviceId)
                     time.sleep(2)
-                os.remove(fileName)
+                os.remove(filePath+fileName)
         else:
             print 'no eBusLog.vgdat in ' + filePath
 
@@ -120,7 +122,7 @@ def clockAdjust():
 if __name__ == "__main__":
     
     ### initial ############################################################
-    deviceId = ''.join(subprocess.check_output('cat /sys/class/net/eth0/address', shell=True)).replace(':','')
+    deviceId = ''.join(subprocess.check_output('cat /sys/class/net/eth0/address', shell=True)).replace(':','').replace('\n','')
     #deviceId = 'b827eb7e7570'
     print 'my deviceId: ' + deviceId
     
