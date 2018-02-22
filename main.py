@@ -13,7 +13,7 @@ import mqtt
 #------------------------------------------------------------------------------
 def file_zipper(fileName):
     maxStrSize = 100000
-    filename = fileName.split('\\').pop()
+    filename = fileName.split('/').pop()
     string = open(fileName, 'r').read()
     bigCmpstr =  base64.b64encode(zlib.compress(string,9))
     cmpstrList = [bigCmpstr[i:i+maxStrSize] for i in range(0, len(bigCmpstr), maxStrSize)]
@@ -22,8 +22,8 @@ def file_zipper(fileName):
 
 def newUsrVar(content):
     print 'save new uservar'
-    #filePath = '\\home\\pi\\Data\\USERVAR.VG'
-    filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\USERVAR.VG"
+    filePath = '/home/pi/Data/USERVAR.VG'
+    #filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\USERVAR.VG"
     newfile = open(filePath,"w")
     newfile.write(content)
     newfile.close
@@ -65,46 +65,52 @@ def SSHinteraction(sshQ, client):
             sshQ.task_done()
 
 def checkVGdat(client,deviceId):
-    #filePath = '\\home\\pi\\Data\\'
-    filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\"
+    filePath = '/home/pi/Data/'
+    #filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\"
     oldSize=0
     intervall=30
     while True:
         time.sleep(intervall)
         fileList = os.listdir(filePath)
         clearedList = [ x for x in fileList if "eBusLog" in x and ".vgdat" in x ]
-        filename = filePath+clearedList[0]
-        newSize=os.path.getsize(filename)
-        if newSize>oldSize:
-            A=True
-            rate=(newSize-oldSize)/intervall
-            oldSize=newSize 
+        if len(clearedList)>0:
+            filename = filePath+clearedList[0]
+            newSize=os.path.getsize(filename)
+            if newSize>oldSize:
+                A=True
+                rate=(newSize-oldSize)/intervall
+                oldSize=newSize 
+            else:
+                A=False
+                rate=0
+            status = 'oldSize:'+str(oldSize) + ' | newSize: '+str(newSize) + ' | state: '+str(A) + ' | rate: '+str(rate)
+            print status
+            mqtt.MQTTpostEvent('heartbeat', [{'name':'vgdat', 'state':str(A), 'comment':status}], client, 'externalDevice', deviceId)
         else:
-            A=False
-            rate=0
-        status = 'oldSize:'+str(oldSize) + ' | newSize: '+str(newSize) + ' | state: '+str(A) + ' | rate: '+str(rate)
-        print status
-        mqtt.MQTTpostEvent('heartbeat', [{'name':'vgdat', 'state':str(A), 'comment':status}], client, 'externalDevice', deviceId)
+            print 'no eBusLog.vgdat in ' + filePath
 
 def vgdatSender(client):
-    #filePath = '\\home\\pi\\Data\\RawData\\'
-    filePath = 'C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\'
+    filePath = '/home/pi/Data/RawData/'
+    #filePath = 'C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\'
     while True:
         time.sleep(300)
         fileList = os.listdir(filePath)
         clearedList = [ x for x in fileList if "eBusLog" in x and ".vgdat" in x ]
-        for fileName in clearedList:
-            filename, cmpstrList = file_zipper(fileName)
-            for index in range(0,len(cmpstrList)):
-                print 'filename:'+filename + ' | index:'+str(index)
-                mqtt.MQTTpostEvent('rawData.vgdat', {'filename':filename, 'index':str(index), 'content':cmpstrList[index]}, client, 'externalDevice', deviceId)
-                time.sleep(2)
-            os.remove(fileName)
+        if len(clearedList)>0:
+            for fileName in clearedList:
+                filename, cmpstrList = file_zipper(fileName)
+                for index in range(0,len(cmpstrList)):
+                    print 'filename:'+filename + ' | index:'+str(index)
+                    mqtt.MQTTpostEvent('rawData.vgdat', {'filename':filename, 'index':str(index), 'content':cmpstrList[index]}, client, 'externalDevice', deviceId)
+                    time.sleep(2)
+                os.remove(fileName)
+        else:
+            print 'no eBusLog.vgdat in ' + filePath
 
 def clockAdjust():
     while True:
-        #command = '''sudo date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"'''
-        #subprocess.check_output(command, shell=True)
+        command = '''sudo date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"'''
+        subprocess.check_output(command, shell=True)
         print 'clock adjusted'
         time.sleep(24.0*3600)
 
@@ -114,9 +120,9 @@ def clockAdjust():
 if __name__ == "__main__":
     
     ### initial ############################################################
-    #deviceId = ''.join(subprocess.check_output('cat \\sys\\class\\net\\eth0\\address', shell=True)).replace(':','')
-    deviceId = 'b827eb7e7570'
-    print deviceId
+    deviceId = ''.join(subprocess.check_output('cat /sys/class/net/eth0/address', shell=True)).replace(':','')
+    #deviceId = 'b827eb7e7570'
+    print 'my deviceId: ' + deviceId
     
     ### mqtt client and callbacks ##########################################
     client = mqtt.MQTTconnect(deviceId)
