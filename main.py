@@ -61,7 +61,7 @@ def checkVGdat(client):
     filePath = '/home/pi/Data/'
     #filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\"
     oldSize=0
-    intervall=30
+    intervall=120
     while True:
         time.sleep(intervall)
         fileList = os.listdir(filePath)
@@ -86,7 +86,7 @@ def vgdatSender(client):
     filePath = '/home/pi/Data/Rawdata/'
     #filePath = 'C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\'
     while True:
-        time.sleep(300)
+        time.sleep(30)
         fileList = os.listdir(filePath)
         clearedList = [ x for x in fileList if "eBusLog" in x and ".vgdat" in x ]
         if len(clearedList)>0:
@@ -96,7 +96,7 @@ def vgdatSender(client):
                 filename, cmpstrList = file_zipper(filePath+fileName)
                 for index in range(0,len(cmpstrList)):
                     print 'filename:'+filename + ' | index:'+str(index)
-                    mqtt.MQTTpostEvent('rawData.vgdat', {'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}, client, 'externalDevice', deviceId)
+                    client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
                 os.remove(filePath+fileName)
         else:
