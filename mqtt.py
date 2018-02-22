@@ -2,6 +2,7 @@ import signal
 import sys
 import ast
 import ibmiotf.application
+import ibmiotf.device
 
 
 def MQTTconnect(deviceId):
@@ -18,6 +19,7 @@ def MQTTconnect(deviceId):
         try:
             client = None
             r=open("/home/pi/_fieldtest/credentials.txt","r")
+            #r=open("C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\app\\credentials.txt","r")
             cred=r.read()
             cred=ast.literal_eval(cred)
             r.close()
@@ -42,6 +44,7 @@ def MQTTconnect(deviceId):
             reg = client.api.registerDevice(typeId="externalDevice",deviceId=deviceId)
             if reg !="":
                 r= open("/home/pi/_fieldtest/credentials.txt","w")
+                #r= open("C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\app\\credentials.txt","w")
                 r.write(str(reg))
                 r.close()
 
@@ -50,12 +53,9 @@ def MQTTconnect(deviceId):
     return (client)
 
 
-def MQTTget(myEventCallback,myCommandCallback,client):
+def MQTTget(myCommandCallback,client):
     try:
-        client.deviceEventCallback = myEventCallback
-        client.deviceCommandCallback = myCommandCallback
-        client.subscribeToDeviceCommands(command='ssh')
-        client.subscribeToDeviceCommands(command='configFile')
+        client.commandCallback = myCommandCallback
     except ibmiotf.ConfigurationException as e:
         print(str(e))
         sys.exit()
@@ -72,19 +72,4 @@ def MQTTget(myEventCallback,myCommandCallback,client):
     print("=============================================================================")
     print("%-33s%-30s%s" % ("Timestamp", "Device", "Event"))
     print("=============================================================================")
-
-def MQTTpostEvent(Topic,message,client,deviceType,deviceId):
-    #Payload = {'d':{"sentAt":dt.datetime.utcnow().isoformat()[:-3]+'Z'}}
-    #Payload['d'].update(message)
-    Payload = {'d':message}
-    print 'try to send event: ' + Topic
-    client.publishEvent(deviceType, deviceId, Topic, "json", Payload)
-
-def MQTTpostCommand(Topic,message,client,deviceType,deviceId):
-    #Payload['c']["sentAt"] = dt.datetime.utcnow().isoformat()[:-3]+'Z'
-    Payload = {'c':message}
-    print 'try to send command: ' + Topic
-    client.publishCommand(deviceType, deviceId, Topic, "json", Payload)
-
-
 

@@ -33,21 +33,13 @@ def newUsrVar(content):
 #                               C A L L B A C K S
 #------------------------------------------------------------------------------
 def myCommandCallback(command):
-    #print("%-33s%-30s%s" % (command.timestamp.isoformat(), command.device, command.command))
-    #print json.dumps(command.data), command.deviceType, command.deviceId
-    if command.deviceId == deviceId:
-        if command.command == 'ssh':
-            sshQ.put({'deviceId':command.deviceId, 'deviceType':command.deviceType, 'command':command.data['command']})
-            
-        elif command.command == 'configFile' and command.data['topic'] == 'addFile':
-             newUsrVar(command.data['content'])
-             
-        else: print command.timestamp.isoformat() + ': ' + command.command + ' (' +command.data['topic'] + ') unknown'      # do nothing
-    else: print command.timestamp.isoformat() + ': ' + command.command + ' not for me!'      # do nothing
-
-def myEventCallback(event):
-    print("%-33s%-30s%s" % (event.timestamp.isoformat(), event.device, event.event))
-    #print json.dumps(event.data), event.deviceType, event.deviceId
+    if command.command == 'ssh':
+        sshQ.put({'command':command.data['command']})
+        
+    elif command.command == 'configFile' and command.data['topic'] == 'addFile':
+         newUsrVar(command.data['content'])
+         
+    else: print command.timestamp.isoformat() + ': ' + command.command + ' ---> unknown'      # do nothing
 
 #------------------------------------------------------------------------------
 #                               T H R E A D S
@@ -61,10 +53,11 @@ def SSHinteraction(sshQ, client):
             out, err = p.communicate()
             print cmdCommand + ': ' + out+err
             answer = (out + err).decode("ascii", errors="ignore").encode()
-            mqtt.MQTTpostEvent('ssh', {'answer':answer}, client, request['deviceType'], request['deviceId'])
+            print 'try to send event: ssh'
+            client.publishEvent('ssh', "json", {'d':{'answer':answer}})
             sshQ.task_done()
 
-def checkVGdat(client,deviceId):
+def checkVGdat(client):
     filePath = '/home/pi/Data/'
     #filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\"
     oldSize=0
@@ -85,7 +78,7 @@ def checkVGdat(client,deviceId):
                 rate=0
             status = 'oldSize:'+str(oldSize) + ' | newSize: '+str(newSize) + ' | state: '+str(A) + ' | rate: '+str(rate)
             print status
-            mqtt.MQTTpostEvent('heartbeat', [{'name':'vgdat', 'state':str(A), 'comment':status}], client, 'externalDevice', deviceId)
+            client.publishEvent('heartbeat', "json", {'d':[{'name':'vgdat', 'state':str(A), 'comment':status}]})
         else:
             print 'no eBusLog.vgdat in ' + filePath
 
@@ -123,12 +116,12 @@ if __name__ == "__main__":
     
     ### initial ############################################################
     deviceId = ''.join(subprocess.check_output('cat /sys/class/net/eth0/address', shell=True)).replace(':','').replace('\n','')
-    #deviceId = 'b827eb7e7570'
+    #deviceId = '333'
     print 'my deviceId: ' + deviceId
     
     ### mqtt client and callbacks ##########################################
     client = mqtt.MQTTconnect(deviceId)
-    mqtt.MQTTget(myEventCallback,myCommandCallback,client)
+    mqtt.MQTTget(myCommandCallback,client)
     
     ### queues #############################################################
     sshQ = queue.Queue(maxsize=0)
@@ -138,7 +131,7 @@ if __name__ == "__main__":
     SSHinteractionT.daemon = True
     SSHinteractionT.start()
     
-    checkVGdatT = threading.Thread(target=checkVGdat, args=(client,deviceId,), name='checkVGdatT')
+    checkVGdatT = threading.Thread(target=checkVGdat, args=(client,), name='checkVGdatT')
     checkVGdatT.daemon = True
     checkVGdatT.start()
     
