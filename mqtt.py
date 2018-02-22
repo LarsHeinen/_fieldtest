@@ -1,10 +1,10 @@
 import signal
 import sys
+import ast
 import ibmiotf.application
 
 
 def MQTTconnect(deviceId):
-    apiOptions = {"org": "pddx55", "id":deviceId, "auth-method": "apikey", "auth-key": "a-pddx55-pcuh4ihl3o", "auth-token": "?ZY&QXOJ)CW2M5@ccK"} #fieldtest-dev
     
     def interruptHandler(signal, frame):
         client.disconnect()
@@ -12,10 +12,35 @@ def MQTTconnect(deviceId):
     
     signal.signal(signal.SIGINT, interruptHandler)
     client = None
-    client = ibmiotf.application.Client(apiOptions)
-    client.connect()
-    return (client)
     
+    A=False
+    while not A:
+        try:
+            cred=ast.literal_eval(open("/home/pi/_fieldtest/credentials.txt","r").read())
+            print "cred file found"
+            deviceOptions = {"org": "pddx55", "type":"externalDevice","id":cred["deviceId"], "auth-method":"token","auth-token":cred["authToken"]}
+            client = ibmiotf.device.Client(deviceOptions)
+            client.connect()
+            A=True
+        except:
+            print "open file failed, cred not found or not authorized ---> creating new cred"
+            apiOptions = {"org": "pddx55", "id":deviceId, "auth-method": "apikey", "auth-key": "a-pddx55-pcuh4ihl3o", "auth-token": "?ZY&QXOJ)CW2M5@ccK"} #fieldtest-dev
+            client = ibmiotf.application.Client(apiOptions)
+            try:
+                client.api.deleteDevice(typeId="externalDevice",deviceId=deviceId)
+            except:
+                print 'cannot delete device: ' + deviceId
+        
+            reg = client.api.registerDevice(typeId="externalDevice",deviceId=deviceId)
+            if reg !="":
+                r= open("/home/pi/_fieldtest/credentials.txt","w")
+                r.write(str(reg))
+                r.close()
+
+            A=False
+    
+    return (client)
+
 
 def MQTTget(myEventCallback,myCommandCallback,client):
     try:
@@ -53,10 +78,5 @@ def MQTTpostCommand(Topic,message,client,deviceType,deviceId):
     print 'try to send command: ' + Topic
     client.publishCommand(deviceType, deviceId, Topic, "json", Payload)
 
-def messageBuilder(deviceId, fileName, cmpstr):
-    message = {"a": {"id": deviceId, "filename":fileName, "content": cmpstr}}
-    print 'message build'
-    return message
-    
 
 
