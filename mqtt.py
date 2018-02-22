@@ -16,9 +16,16 @@ def MQTTconnect(deviceId):
     A=False
     while not A:
         try:
-            cred=ast.literal_eval(open("/home/pi/_fieldtest/credentials.txt","r").read())
+            client = None
+            r=open("/home/pi/_fieldtest/credentials.txt","r")
+            cred=r.read()
+            cred=ast.literal_eval(cred)
+            r.close()
             print "cred file found"
-            deviceOptions = {"org": "pddx55", "type":"externalDevice","id":cred["deviceId"], "auth-method":"token","auth-token":cred["authToken"]}
+            DeviceToken=cred["authToken"]
+            DeviceId= cred["deviceId"]
+            deviceOptions = {"org": "pddx55", "type":"externalDevice","id":DeviceId, "auth-method":"token","auth-token":DeviceToken}
+            print deviceOptions
             client = ibmiotf.device.Client(deviceOptions)
             client.connect()
             A=True
@@ -26,6 +33,7 @@ def MQTTconnect(deviceId):
             print "open file failed, cred not found or not authorized ---> creating new cred"
             apiOptions = {"org": "pddx55", "id":deviceId, "auth-method": "apikey", "auth-key": "a-pddx55-pcuh4ihl3o", "auth-token": "?ZY&QXOJ)CW2M5@ccK"} #fieldtest-dev
             client = ibmiotf.application.Client(apiOptions)
+            client.connect()
             try:
                 client.api.deleteDevice(typeId="externalDevice",deviceId=deviceId)
             except:
