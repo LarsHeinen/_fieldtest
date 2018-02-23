@@ -1,5 +1,6 @@
 import os
 import time
+import datetime as dt
 import Queue as queue
 import threading
 import subprocess
@@ -17,11 +18,11 @@ def file_zipper(fileName):
     string = open(fileName, 'r').read()
     bigCmpstr =  base64.b64encode(zlib.compress(string,9))
     cmpstrList = [bigCmpstr[i:i+maxStrSize] for i in range(0, len(bigCmpstr), maxStrSize)]
-    print filename + ': original.length: '+str(len(string)) + ' | ' + 'compressed.length: '+str(len(bigCmpstr))
+    print 'original.length: '+str(len(string)) + ' | ' + 'compressed.length: '+str(len(bigCmpstr))
     return filename, cmpstrList
 
 def newUsrVar(content):
-    print 'save new uservar'
+    print str(dt.datetime.utcnow())[:-3] + ': save new USERVAR.VG'
     filePath = '/home/pi/Data/USERVAR.VG'
     newfile = open(filePath,"w")
     newfile.write(content)
@@ -48,11 +49,11 @@ def SSHinteraction(sshQ, client):
         if not sshQ.empty():
             request = sshQ.get()
             cmdCommand = request['command']
+            print str(dt.datetime.utcnow())[:-3] + ': ssh command: ' + cmdCommand
             p = subprocess.Popen(cmdCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             out, err = p.communicate()
-            print cmdCommand + ': ' + out+err
             answer = (out + err).decode("ascii", errors="ignore").encode()
-            print 'try to send event: ssh'
+            print str(dt.datetime.utcnow())[:-3] + ': ssh respond: ' + answer.replace('\n','')
             client.publishEvent('ssh', "json", {'d':{'answer':answer}})
             sshQ.task_done()
 
@@ -75,10 +76,10 @@ def checkVGdat(client):
                 A=False
                 rate=0
             status = 'oldSize:'+str(oldSize) + ' | newSize: '+str(newSize) + ' | state: '+str(A) + ' | rate: '+str(rate)
-            print status
+            print str(dt.datetime.utcnow())[:-3] + ': heartbeat: (' + status + ')'
             client.publishEvent('heartbeat', "json", {'d':[{'name':'vgdat', 'state':str(A), 'comment':status}]})
         else:
-            print 'no eBusLog.vgdat in ' + filePath
+            print str(dt.datetime.utcnow())[:-3] + ': no eBusLog.vgdat in ' + filePath
 
 def vgdatSender(client):
     filePath = '/home/pi/Data/Rawdata/'
@@ -88,22 +89,23 @@ def vgdatSender(client):
         clearedList = [ x for x in fileList if "eBusLog" in x and ".vgdat" in x ]
         if len(clearedList)>0:
             for fileName in clearedList:
+                print str(dt.datetime.utcnow())[:-3] + ': '+fileName
                 dateStr = fileName[len(fileName)-19:-13]
                 date = '20'+dateStr[-2:]+'-'+dateStr[2:4]+'-'+dateStr[0:2]
                 filename, cmpstrList = file_zipper(filePath+fileName)
                 for index in range(0,len(cmpstrList)):
-                    print 'filename:'+filename + ' | index:'+str(index)
+                    print 'sending index: ' + str(index)
                     client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
                 os.remove(filePath+fileName)
         else:
-            print 'no eBusLog.vgdat in ' + filePath
+            print str(dt.datetime.utcnow())[:-3] + ': no eBusLog.vgdat in ' + filePath
 
 def clockAdjust():
     while True:
         command = '''sudo date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"'''
         subprocess.check_output(command, shell=True)
-        print 'clock adjusted'
+        print str(dt.datetime.utcnow())[:-3] + ': clock adjusted'
         time.sleep(24.0*3600)
 
 
@@ -113,7 +115,7 @@ if __name__ == "__main__":
     
     ### initial ############################################################
     deviceId = ''.join(subprocess.check_output('cat /sys/class/net/eth0/address', shell=True)).replace(':','').replace('\n','')
-    print 'my deviceId: ' + deviceId
+    print str(dt.datetime.utcnow())[:-3] + ': my deviceId: ' + deviceId
     
     ### mqtt client and callbacks ##########################################
     client = mqtt.MQTTconnect(deviceId)
@@ -142,14 +144,14 @@ if __name__ == "__main__":
     ### run forever ########################################################
     timer = 3600
     while True:
-        time.sleep(1)
         if timer >= 3600:
-            states = { 'SSHinteractionT':str(SSHinteractionT.isAlive()), 'checkVGdatT':str(checkVGdatT.isAlive()), 'vgdatSenderT':str(vgdatSenderT.isAlive()), 'clockerT':str(clockerT.isAlive()) }
-            print 'sending thread status info'
+            states = { 'timestamp':str(dt.datetime.utcnow())[:-3], 'SSHinteractionT':str(SSHinteractionT.isAlive()), 'checkVGdatT':str(checkVGdatT.isAlive()), 'vgdatSenderT':str(vgdatSenderT.isAlive()), 'clockerT':str(clockerT.isAlive()) }
+            print str(dt.datetime.utcnow())[:-3] + ': sending thread status info'
             client.publishEvent('status.py', "json", {'d':states})
             timer = 0
         else:
             timer+=1
+        time.sleep(1)
 
 
 
