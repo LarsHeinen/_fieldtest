@@ -23,7 +23,6 @@ def file_zipper(fileName):
 def newUsrVar(content):
     print 'save new uservar'
     filePath = '/home/pi/Data/USERVAR.VG'
-    #filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\USERVAR.VG"
     newfile = open(filePath,"w")
     newfile.write(content)
     newfile.close
@@ -59,7 +58,6 @@ def SSHinteraction(sshQ, client):
 
 def checkVGdat(client):
     filePath = '/home/pi/Data/'
-    #filePath = "C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\"
     oldSize=0
     intervall=120
     while True:
@@ -84,9 +82,8 @@ def checkVGdat(client):
 
 def vgdatSender(client):
     filePath = '/home/pi/Data/Rawdata/'
-    #filePath = 'C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\'
     while True:
-        time.sleep(30)
+        time.sleep(600)
         fileList = os.listdir(filePath)
         clearedList = [ x for x in fileList if "eBusLog" in x and ".vgdat" in x ]
         if len(clearedList)>0:
@@ -116,7 +113,6 @@ if __name__ == "__main__":
     
     ### initial ############################################################
     deviceId = ''.join(subprocess.check_output('cat /sys/class/net/eth0/address', shell=True)).replace(':','').replace('\n','')
-    #deviceId = '333'
     print 'my deviceId: ' + deviceId
     
     ### mqtt client and callbacks ##########################################
@@ -143,21 +139,17 @@ if __name__ == "__main__":
     clockerT.daemon = True
     clockerT.start()
     
-    ### bluemix run forever ################################################
+    ### run forever ########################################################
+    timer = 3600
     while True:
         time.sleep(1)
-
-
-
-
-
-
-
-
-
-
-
-
+        if timer >= 3600:
+            states = { 'SSHinteractionT':str(SSHinteractionT.isAlive()), 'checkVGdatT':str(checkVGdatT.isAlive()), 'vgdatSenderT':str(vgdatSenderT.isAlive()), 'clockerT':str(clockerT.isAlive()) }
+            print 'sending thread status info'
+            client.publishEvent('status.py', "json", {'d':states})
+            timer = 0
+        else:
+            timer+=1
 
 
 

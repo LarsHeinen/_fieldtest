@@ -19,7 +19,6 @@ def MQTTconnect(deviceId):
         try:
             client = None
             r=open("/home/pi/_fieldtest/credentials.txt","r")
-            #r=open("C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\app\\credentials.txt","r")
             cred=r.read()
             cred=ast.literal_eval(cred)
             r.close()
@@ -44,7 +43,6 @@ def MQTTconnect(deviceId):
             reg = client.api.registerDevice(typeId="externalDevice",deviceId=deviceId)
             if reg !="":
                 r= open("/home/pi/_fieldtest/credentials.txt","w")
-                #r= open("C:\\Users\\ceidam\\Eigene Dateien\\fieldtest monitoring\\packageSender\\app\\credentials.txt","w")
                 r.write(str(reg))
                 r.close()
 
@@ -66,10 +64,7 @@ def MQTTget(myCommandCallback,client):
         print(str(e))
         sys.exit()
     
-    
     print("(Press Ctrl+C to disconnect)")
     
-    print("=============================================================================")
-    print("%-33s%-30s%s" % ("Timestamp", "Device", "Event"))
-    print("=============================================================================")
+
 
