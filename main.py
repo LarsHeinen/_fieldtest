@@ -18,7 +18,7 @@ def file_zipper(fileName):
     string = open(fileName, 'r').read()
     bigCmpstr =  base64.b64encode(zlib.compress(string,9))
     cmpstrList = [bigCmpstr[i:i+maxStrSize] for i in range(0, len(bigCmpstr), maxStrSize)]
-    print 'original.length: '+str(len(string)) + ' | ' + 'compressed.length: '+str(len(bigCmpstr))
+    print '                        org.len:'+str(len(string)) + ' | ' + 'cmpr.len:'+str(len(bigCmpstr))
     return filename, cmpstrList
 
 def newUsrVar(content):
@@ -76,7 +76,7 @@ def checkVGdat(client):
                 A=False
                 rate=0
             status = 'oldSize:'+str(oldSize) + ' | newSize: '+str(newSize) + ' | state: '+str(A) + ' | rate: '+str(rate)
-            print str(dt.datetime.utcnow())[:-3] + ': heartbeat: (' + status + ')'
+            print str(dt.datetime.utcnow())[:-3] + ': heartbeat (' + str(oldSize)+' | '+str(newSize)+' | '+str(A)+' | '+str(rate) + ')'
             client.publishEvent('heartbeat', "json", {'d':[{'name':'vgdat', 'state':str(A), 'comment':status}]})
         else:
             print str(dt.datetime.utcnow())[:-3] + ': no eBusLog.vgdat in ' + filePath
@@ -94,7 +94,7 @@ def vgdatSender(client):
                 date = '20'+dateStr[-2:]+'-'+dateStr[2:4]+'-'+dateStr[0:2]
                 filename, cmpstrList = file_zipper(filePath+fileName)
                 for index in range(0,len(cmpstrList)):
-                    print 'sending index: ' + str(index)
+                    print '                        sending index: ' + str(index)
                     client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
                 os.remove(filePath+fileName)
@@ -106,7 +106,7 @@ def clockAdjust():
         command = '''sudo date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"'''
         subprocess.check_output(command, shell=True)
         print str(dt.datetime.utcnow())[:-3] + ': clock adjusted'
-        time.sleep(24.0*3600)
+        time.sleep(24*3600)
 
 
 
