@@ -60,6 +60,7 @@ def SSHinteraction(sshQ, client):
 def checkVGdat(client):
     filePath = '/home/pi/Data/'
     oldSize=0
+    oSize=0
     intervall=120
     while True:
         time.sleep(intervall)
@@ -71,12 +72,13 @@ def checkVGdat(client):
             if newSize>oldSize:
                 A=True
                 rate=(newSize-oldSize)/intervall
+                oSize=oldSize
                 oldSize=newSize 
             else:
                 A=False
                 rate=0
-            status = 'oldSize:'+str(oldSize) + ' | newSize: '+str(newSize) + ' | state: '+str(A) + ' | rate: '+str(rate)
-            print str(dt.datetime.utcnow())[:-3] + ': heartbeat (' + str(oldSize)+' | '+str(newSize)+' | '+str(A)+' | '+str(rate) + ')'
+            status = 'oldSize:'+str(oSize) + ' | newSize: '+str(newSize) + ' | state: '+str(A) + ' | rate: '+str(rate)
+            print str(dt.datetime.utcnow())[:-3] + ': heartbeat (' + str(oSize)+' | '+str(newSize)+' | '+str(A)+' | '+str(rate) + ')'
             client.publishEvent('heartbeat', "json", {'d':[{'name':'vgdat', 'state':str(A), 'comment':status}]})
         else:
             print str(dt.datetime.utcnow())[:-3] + ': no eBusLog.vgdat in ' + filePath
@@ -97,7 +99,7 @@ def vgdatSender(client):
                     print '                        sending index: ' + str(index)
                     client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
-                os.remove(filePath+fileName)
+                #os.remove(filePath+fileName)
         else:
             print str(dt.datetime.utcnow())[:-3] + ': no eBusLog.vgdat in ' + filePath
 
@@ -146,7 +148,7 @@ if __name__ == "__main__":
     while True:
         if timer >= 3600:
             states = { 'timestamp':str(dt.datetime.utcnow())[:-3], 'SSHinteractionT':str(SSHinteractionT.isAlive()), 'checkVGdatT':str(checkVGdatT.isAlive()), 'vgdatSenderT':str(vgdatSenderT.isAlive()), 'clockerT':str(clockerT.isAlive()) }
-            print str(dt.datetime.utcnow())[:-3] + ': sending thread status info'
+            print str(dt.datetime.utcnow())[:-3] + 'ssh:'+str(SSHinteractionT.isAlive()) + ' | ' + 'hearter:'+str(checkVGdatT.isAlive()) + ' | ' + 'sender:'+str(vgdatSenderT.isAlive()) + ' | ' + 'clocker'+str(clockerT.isAlive())
             client.publishEvent('status.py', "json", {'d':states})
             timer = 0
         else:
