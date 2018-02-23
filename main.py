@@ -148,7 +148,7 @@ if __name__ == "__main__":
     while True:
         if timer >= 3600:
             states = { 'timestamp':str(dt.datetime.utcnow())[:-3], 'SSHinteractionT':str(SSHinteractionT.isAlive()), 'checkVGdatT':str(checkVGdatT.isAlive()), 'vgdatSenderT':str(vgdatSenderT.isAlive()), 'clockerT':str(clockerT.isAlive()) }
-            print str(dt.datetime.utcnow())[:-3] + 'ssh:'+str(SSHinteractionT.isAlive()) + ' | ' + 'hearter:'+str(checkVGdatT.isAlive()) + ' | ' + 'sender:'+str(vgdatSenderT.isAlive()) + ' | ' + 'clocker'+str(clockerT.isAlive())
+            print str(dt.datetime.utcnow())[:-3] + ': ssh:'+str(SSHinteractionT.isAlive()) + ' | ' + 'hearter:'+str(checkVGdatT.isAlive()) + ' | ' + 'sender:'+str(vgdatSenderT.isAlive()) + ' | ' + 'clocker:'+str(clockerT.isAlive())
             client.publishEvent('status.py', "json", {'d':states})
             timer = 0
         else:
