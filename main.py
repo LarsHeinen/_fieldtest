@@ -99,7 +99,7 @@ def vgdatSender(client):
                     print str(dt.datetime.utcnow())[:-3] + ': sending index: ' + str(index) + '('+str(len(cmpstrList[index]))+')'
                     client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
-                #os.remove(filePath+fileName)
+                os.remove(filePath+fileName)
         else:
             print str(dt.datetime.utcnow())[:-3] + ': no eBusLog.vgdat in ' + filePath
 
