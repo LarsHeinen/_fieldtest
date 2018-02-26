@@ -18,7 +18,7 @@ def file_zipper(fileName):
     string = open(fileName, 'r').read()
     bigCmpstr =  base64.b64encode(zlib.compress(string,9))
     cmpstrList = [bigCmpstr[i:i+maxStrSize] for i in range(0, len(bigCmpstr), maxStrSize)]
-    print '                        org.len:'+str(len(string)) + ' | ' + 'cmpr.len:'+str(len(bigCmpstr))
+    print str(dt.datetime.utcnow())[:-3] + ': compressing (org.len:'+str(len(string)) + ' | ' + 'cmpr.len:'+str(len(bigCmpstr)) + ')'
     return filename, cmpstrList
 
 def newUsrVar(content):
@@ -39,7 +39,7 @@ def myCommandCallback(command):
     elif command.command == 'configFile' and command.data['topic'] == 'addFile':
          newUsrVar(command.data['content'])
          
-    else: print command.timestamp.isoformat() + ': ' + command.command + ' ---> unknown'      # do nothing
+    else: print str(dt.datetime.utcnow())[:-3] + ': ' + command.command + ' ---> unknown'      # do nothing
 
 #------------------------------------------------------------------------------
 #                               T H R E A D S
@@ -96,7 +96,7 @@ def vgdatSender(client):
                 date = '20'+dateStr[-2:]+'-'+dateStr[2:4]+'-'+dateStr[0:2]
                 filename, cmpstrList = file_zipper(filePath+fileName)
                 for index in range(0,len(cmpstrList)):
-                    print '                        sending index: ' + str(index)
+                    print str(dt.datetime.utcnow())[:-3] + ': sending index: ' + str(index) + '('+str(len(cmpstrList[index]))+')'
                     client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
                 #os.remove(filePath+fileName)
