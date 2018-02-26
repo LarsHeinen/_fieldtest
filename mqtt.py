@@ -32,7 +32,7 @@ def MQTTconnect(deviceId):
             A=True
         except:
             print "open file failed, cred not found or not authorized ---> creating new cred"
-            apiOptions = {"org": "pddx55", "id":deviceId, "auth-method": "apikey", "auth-key": "a-pddx55-pcuh4ihl3o", "auth-token": "?ZY&QXOJ)CW2M5@ccK"} #fieldtest-dev
+            apiOptions = {"org": "pddx55", "id":deviceId+'_handler', "auth-method": "apikey", "auth-key": "a-pddx55-pcuh4ihl3o", "auth-token": "?ZY&QXOJ)CW2M5@ccK"} #fieldtest-dev
             client = ibmiotf.application.Client(apiOptions)
             client.connect()
             try:
