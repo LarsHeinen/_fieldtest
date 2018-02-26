@@ -97,7 +97,7 @@ def vgdatSender(client):
                 date = '20'+dateStr[-2:]+'-'+dateStr[2:4]+'-'+dateStr[0:2]
                 filename, cmpstrList = file_zipper(filePath+fileName)
                 for index in range(0,len(cmpstrList)):
-                    print str(dt.datetime.utcnow())[:-3] + ': sending index: ' + str(index) + '('+str(len(cmpstrList[index]))+')'
+                    print str(dt.datetime.utcnow())[:-3] + ': sending index: ' + str(index) + ' (len:'+str(len(cmpstrList[index]))+')'
                     client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
                 #os.remove(filePath+fileName)
