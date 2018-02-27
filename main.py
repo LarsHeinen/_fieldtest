@@ -102,7 +102,7 @@ def vgdatSender(client):
                     time.sleep(2)
                 #os.remove(filePath+fileName)
         else:
-            print str(dt.datetime.utcnow())[:-3] + ': no eBusLog.vgdat in ' + filePath
+            print str(dt.datetime.utcnow())[:-3] + ': no .vgdat in ' + filePath
 
 def clockAdjust():
     while True:
