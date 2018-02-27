@@ -65,7 +65,7 @@ def checkVGdat(client):
     while True:
         time.sleep(intervall)
         fileList = os.listdir(filePath)
-        clearedList = [ x for x in fileList if "eBusLog" in x and ".vgdat" in x ]
+        clearedList = [x for x in fileList if "eBusLog" in x and ".vgdat" in x]
         if len(clearedList)>0:
             filename = filePath+clearedList[0]
             newSize=os.path.getsize(filename)
@@ -100,7 +100,7 @@ def vgdatSender(client):
                     print str(dt.datetime.utcnow())[:-3] + ': sending index: ' + str(index) + ' (len:'+str(len(cmpstrList[index]))+')'
                     client.publishEvent('rawData.vgdat', "json", {'d':{'date':date, 'filename':filename, 'index':str(index), 'content':cmpstrList[index]}})                    
                     time.sleep(2)
-                #os.remove(filePath+fileName)
+                os.remove(filePath+fileName)
         else:
             print str(dt.datetime.utcnow())[:-3] + ': no .vgdat in ' + filePath
 
