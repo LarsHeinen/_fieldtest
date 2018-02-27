@@ -18,7 +18,7 @@ def MQTTconnect(deviceId):
     while not A:
         try:
             client = None
-            r=open("/home/pi/_fieldtest/credentials.txt","r")
+            r=open("/home/pi/fieldtest/credentials.txt","r")
             cred=r.read()
             cred=ast.literal_eval(cred)
             r.close()
@@ -42,7 +42,7 @@ def MQTTconnect(deviceId):
         
             reg = client.api.registerDevice(typeId="externalDevice",deviceId=deviceId)
             if reg !="":
-                r= open("/home/pi/_fieldtest/credentials.txt","w")
+                r= open("/home/pi/fieldtest/credentials.txt","w")
                 r.write(str(reg))
                 r.close()
 
